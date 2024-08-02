@@ -152,11 +152,189 @@ enviar email].
 
 Métodos findAll, findById, consulta SQL, inserção/atualização/deleção de registros, etc...
 
-## Primeiro teste da API
+## Primeiro teste da API REST
 
-## Primeiro teste com repository
+### Criação do primeiro end point
+
+1. Criação do pacote controllers
+
+2. Criar uma classe ProductController
+
+Nela, será onde disponibilazaremos os recursos (GET, POST...), implementando-os.
+
+#### Configuração da Classe
+
+Veja tudo que foi feito: [ProductController]()
+
+- [ ] Anotação @RestController
+- [ ] Anotação RequestMapping (passando a rota a ser utilizada)
+- [ ] Implementação do método desejado (GET, POST, DELETE...), exemplo:
+
+```java
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "/products")
+public class ProductController {
+    @GetMapping
+    public String toString() {
+        return "Olá, mundo!";
+    }
+}
+```
+
+A partir disso, ao rodar o programa, poderemos utilizar o Postman para fazer as requisições :)
+
+## Primeiro teste com Repository
+
+Seria possível buscar um produto do banco de dados e imprimir o seu nome em um método Get? Vejamos!
+
+Sabemos que o Repository é responsável por acessos os dados, então criaremos um!
+
+1. Criação do pacote repositories
+
+2. Criar uma interface ProductRepository
+
+Veja tudo que foi feito: [ProductRepository]()
+
+- [ ] Anotação @Repository
+- [ ] Extender CrudRepository, passando o nosso objeto a ser usado (Product) e o tipo do ID (Long).
+
+Depois disso, o Repository precisa ser injetado na classe de Controle!
+```java
+@RestController
+@RequestMapping(value = "/products")
+public class ProductController {
+
+    @Autowired
+    private ProductRepository productRepository;
+```
+
+A partir disso, podemos usá-lo dentro dos métodos HTTP, possuindo um mundo de métodos disponíveis:
+
+![img_2.png](img_2.png)
+
+Como a nossa proposta conforme dito acima é procurar um produto específico, utilizaremos o findById.
+```java
+    @GetMapping
+    public String toString() {
+        Optional<Product> result = productRepository.findById(1L);
+
+        //pegando o produto que está dentro do optional.
+        Product product = result.get();
+        
+        //como o retorno do método é String, utilizaremos o return getName().
+        return product.getName();
+    }
+```
+Ao rodar o código, poderemos buscar no Postman, veja:
+
+![img_3.png](img_3.png)
+
+Beleza, perfeito e funcionou. Mas tá errado, correto? O ideal conforme vimos lá em cima é o Controller depender de um
+Service. Neste cenário acima, ele está dependendo de um Repository.
+
+Outra coisa, se você observar no método, nós estamos passando a id desejada "1L", como parâmetro.
+
+E por fim, o nosso endpoint não retornará somente uma String e sim o Objeto todo do Product.
+
+Vamos arruamar isso. 👇
 
 ## Criando DTO e estruturando camadas
+
+Conforme destacado acima, pontuamos que possuimos diversas coisas a serem melhoradas, vamos lá!
+
+### Primeiro, vamos entender uma coisa, o que seria DTO?
+
+**DTO** - Data Transfer Object é um objeto simples para transferirmos dados.
+
+Ele não é gerenciado por uma lib de ORM (JPA) / acesso a dados.
+
+Além disso, pode conter outros DTO's aninhados.
+
+❗**NUNCA ANINHE UMA ENTITY DENTRO DE UM DTO**
+
+### Pra quê usar DTO?
+
+Diversos motivos, veja:
+
+- Projeção de Dados (projetar somente os dados que você precisa). O Product tem diversos atributos
+mas você pode, por exemplo, querer uma busca de dados mais simples com dados básicos (id e nome), e
+isso pode ser feito. Nós não precisamos expor a senha de um User ao criar um DTO.
+  - Segurança
+  - Economia de Tráfego
+  - Flexibilidade: permite que a API trafegue mais de uma representação dos dados. Ou seja, uma entidade
+  pode ter outros DTOS.
+    - Para preencher um combobox: {id: number, nome: string}
+    - Para um relatório detalhado: {id: number, nome: string, salario: number, email: string,
+    telefones: string[] }
+
+
+- Separação de responsabilidades
+  - Service e repository: transação e monitoramento ORM
+  - Controller: tráfego simples de dados
+
+Na prática:
+
+Veja o DTO criado [aqui]().
+
+1. Criaremos um pacote chamado dto
+2. Dentro dele, um ProductDto do tipo Record
+3. Pegaremos os dados básicos que iremos utilizar
+4. Criar construtor (com e sem argumentos)
+5. Gerar Getters. Setters não precisa, pois não faz sentido alterarmos esses dados.
+
+<hr>
+
+Bom, como sabemos, o Controller não pode depender do Repository. Vamos organizar as camadas.
+
+## Criação Service
+
+Veja a classe criada [aqui]().
+
+1. Criar pacote services
+2. Criar classe ProductService
+3. Passar anotação @Service
+4. Injetar Repository para aí sim o service depender da camada de acesso a dados
+
+Agora sim implementaremos a busca no banco da dados, veja o método:
+
+```java
+import org.springframework.transaction.annotation.Transactional;
+
+//como o service devolve um DTO para o controller,
+//a função retornará um DTO
+@Transactional(readOnly = true)
+public ProductDto findById(Long id) {
+    //busca no banco de dados
+    Optional<Product> result = productRepository.findById(id);
+
+    //pegamos o objeto de cima
+    Product product = result.get();
+
+    //lembrar que no DTO foi criado um construtor
+    //específico para receber um Product
+    ProductDto dto = new ProductDto(product);
+
+    return dto;
+}
+```
+
+Agora no Controller, tiramos o Repository e injetamos o Service :)
+
+Método do Controller:
+
+```java
+    @GetMapping(value = "/{id}")
+    public ProductDto findById(@PathVariable Long id) {
+        return productService.findById(id);
+    }
+```
+
+
+
 
 ## Dica da bilioteca ModelMapper para DTO
 
