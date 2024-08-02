@@ -1,13 +1,15 @@
-package com.devsuperior.apicamadascrudexcpvalidation;
+package com.devsuperior.dscommerce;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ApiCamadasCrudExcpValidationApplication {
+public class DscommerceApplication  {
 
     public static void main(String[] args) {
-        SpringApplication.run(ApiCamadasCrudExcpValidationApplication.class, args);
+        SpringApplication.run(DscommerceApplication.class, args);
     }
+
 
 }

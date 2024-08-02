@@ -1,10 +1,10 @@
-package com.devsuperior.apicamadascrudexcpvalidation;
+package com.devsuperior.dscommerce;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ApiCamadasCrudExcpValidationApplicationTests {
+class DscommerceApplicationTests {
 
     @Test
     void contextLoads() {
