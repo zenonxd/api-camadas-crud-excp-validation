@@ -2,6 +2,65 @@
   <img src="https://img.shields.io/static/v1?label=SpringProfessional - Dev Superior&message=API REST, camadas, CRUD, exception, validation&color=8257E5&labelColor=000000" alt="Testes automatizados na prática com Spring Boot" />
 </p>
 
+
+# Tópicos
+
+* [Tópicos](#tópicos)
+* [Objetivo](#objetivo)
+* [Requisitos projeto](#requisitos-projeto)
+* [UML](#uml)
+
+
+* [API REST - Conceitos](#api-rest---conceitos)
+  * [API WEB](#api-web)
+  * [API REST](#api-rest)
+    * [Padrão REST - Regras](#padrão-rest---regras)
+
+
+* [Recursos, URL, parâmetros de consulta e de rota](#recursos-url-parâmetros-de-consulta-e-de-rota)
+* [Padrões de URL, verbos HTTP, códigos de resposta](#padrões-de-url-verbos-http-códigos-de-resposta)
+  * [Verbos HTTP mais utilizados](#verbos-http-mais-utilizados)
+  * [Códigos de resposta HTTP](#códigos-de-resposta-http)
+
+
+* [Padrão camadas](#padrão-camadas)
+  * [Responsabilidades das camadas](#responsabilidades-das-camadas)
+
+
+* [Primeiro teste da API REST](#primeiro-teste-da-api-rest)
+  * [Controller](#controller)
+  * [Repository](#primeiro-teste-com-repository)
+  * [Criando DTO e estruturando camadas](#criando-dto-e-estruturando-camadas)
+    * [Primeiro, vamos entender uma coisa, o que seria DTO?](#primeiro-vamos-entender-uma-coisa-o-que-seria-dto)
+    * [Pra quê usar DTO?](#pra-quê-usar-dto)
+  * [Criação Service](#criação-service)
+  * [Como copiar dados da entity para o DTO?](#como-copiar-dados-da-entity-para-o-dto)
+
+
+* [CRUD](#crud)
+* [findById](#findbyid)
+* [findAll](#findall---busca-paginada-de-produtos)
+  * [findAll - Busca paginada (Pageable)](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
+  * [Customizando resultados com Pageable](#customizando-resultados-com-pageable)
+    * [Resultado de página por tamanho](#resultado-de-página-por-tamanho)
+    * [Órdem alfabética](#órdem-alfabética)
+* [Create](#create---inserindo-novo-produto-com-post)
+* [PUT](#atualizando-produto-com-put)
+* [DELETE](#deletando-produto-com-delete)
+
+
+* [Customizando resposta com ResponseEntity](#customizando-resposta-com-responseentity)
+
+* [Criando exceções de serviço customizadas](#criando-exceções-de-serviço-customizadas)
+  * [Implementando outras exceções](#implementando-outras-exceções-)
+
+* [Validação com Bean Validation](#validação-com-bean-validation)
+
+* [Customizando a resposta da validação](#customizando-a-resposta-da-validação)
+
+* [DESAFIO CRUD de clientes](#desafio-crud-de-clientes)
+
+
 # Objetivo
 
 Aprenderemos funcionalidades que a nossa aplicação irá utilizar, por exemplo:
@@ -156,6 +215,8 @@ Métodos findAll, findById, consulta SQL, inserção/atualização/deleção de 
 
 ### Criação do primeiro end point
 
+### Controller
+
 1. Criação do pacote controllers
 
 2. Criar uma classe ProductController
@@ -301,6 +362,8 @@ Veja a classe criada [aqui]().
 
 Agora sim implementaremos a busca no banco da dados, veja o método:
 
+### findById
+
 ```java
 import org.springframework.transaction.annotation.Transactional;
 
@@ -333,18 +396,160 @@ Método do Controller:
     }
 ```
 
+## Como copiar dados da entity para o DTO?
 
+Pode ser feita a cópia manual (set / construtor), passando argumento por argumento no construtor.
 
+Ou usar alguam lib que copiará atributos de mesmo nome de um objeto para outro, como o ModelMapper.
 
-## Dica da bilioteca ModelMapper para DTO
+[Veja aqui](https://www.baeldung.com/entity-to-and-from-dto-for-a-java-spring-application)
 
 ## CRUD
 
-## Busca paginada de produtos
+Create, salvando um novo registro.
 
-## Inserindo novo produto com POST
+Retrieve, recuperando todos os registros (paginados) ou somente um (por id)
+
+Update, atualizar dado um id. 
+
+Delete, deletar dado um id.
+
+
+## findAll - Busca paginada de produtos
+
+Primeiro, faremos um método para buscar todos os itens, veja:
+
+No Service:
+```java
+@Transactional(readOnly = true)
+public List<ProductDto> findAll() {
+    List<Product> products = (List<Product>) productRepository.findAll();
+    
+    return products.stream().map(x -> new ProductDto(x)).collect(Collectors.toList());
+}
+```
+
+No Controller:
+```java
+@GetMapping
+public List<ProductDto> findAll() {
+    return productService.findAll();
+}
+```
+
+### Ok, e para realizar a busca paginada? Usaremos Pageable.
+
+É muito simples. Dentro do método do Controller, podemnos passar um parametro chamado "Pageable".
+
+Passaremos esse pageable dentro do findAll, veja:
+
+```java
+@GetMapping
+public Page<ProductDto> findAll(Pageable pageable) {
+    return productService.findAll(pageable);
+}
+```
+
+Mas o nosso service também receberá esse pageable!
+
+```java
+@Transactional(readOnly = true)
+public Page<ProductDto> findAll(Pageable pageable) {
+    Page<Product> products = productRepository.findAll(pageable);
+
+    //pode fazer .map direto pois Page já é uma stream
+    return products.map(x -> new ProductDto(x));
+}
+```
+
+Por padrão, o Pageable retorna 20 elementos
+
+### Customizando resultados com Pageable
+
+#### Resultado de página por tamanho
+
+E se quiséssemos 12 resultados ao invés de 20? Colocaremos um "QueryParam" no postman, veja:
+
+![img_4.png](img_4.png)
+
+#### Órdem alfabética
+
+![img_5.png](img_5.png)
+
+## Create - Inserindo novo produto com POST
+
+No service:
+```java
+@Transactional
+public ProductDto insert (ProductDto productDto) {
+    //criando um Product para receber os dados do DTO
+    Product entity = new Product();
+
+
+    //salvando os dados do DTO no Product
+    entity.setName(productDto.getName());
+    entity.setDescription(productDto.getDescription());
+    entity.setPrice(productDto.getPrice());
+    entity.setImgUrl(productDto.getImgUrl());
+
+    //salvando entidade no banco de dados
+    entity = productRepository.save(entity);
+
+    //reconvertendo para DTO
+    return new ProductDto(entity);
+}
+```
+
+No Controller
+```java
+@PostMapping
+public ProductDto insert(@RequestBody ProductDto productDto) {
+    return productService.insert(productDto);
+}
+```
 
 ## Customizando resposta com ResponseEntity
+
+No nosso Controller, ao invés de retornarmos só DTOS ou Pages, retornaremos também ResponseEntity, veja:
+
+```java
+@GetMapping(value = "/{id}")
+public ResponseEntity<ProductDto> findById(@PathVariable Long id) {
+    ProductDto dto = productService.findById(id);
+
+    return ResponseEntity.status(HttpStatus.OK).body(dto);
+}
+```
+
+Você pode conferir outros exemplos das alterações com ResponseEntity [aqui]()
+
+### ❗❗IMPORTANTE.
+
+Em método de criação (insert) o ".CREATED", precisa receber uma URI como parametro, então fazemos dessa forma:
+
+```java
+@PostMapping
+public ResponseEntity<ProductDto> insert(@RequestBody ProductDto dto) {
+    dto = productService.insert(dto);
+
+    URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+            .buildAndExpand(dto.getId()).toUri();
+
+    return ResponseEntity.created(uri).body(dto);
+}
+```
+
+Desta maneira, ao realizar a inserção de dados no postman e consultar o item inserido, ele terá uma URI personalizada,
+veja:
+
+![img_6.png](img_6.png)
+
+
+
+
+
+
+
 
 ## Atualizando produto com PUT
 
