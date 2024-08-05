@@ -5,7 +5,6 @@
 
 # Tópicos
 
-* [Tópicos](#tópicos)
 * [Objetivo](#objetivo)
 * [Requisitos projeto](#requisitos-projeto)
 * [UML](#uml)
@@ -38,15 +37,15 @@
 
 
 * [CRUD](#crud)
-* [findById](#findbyid)
-* [findAll](#findall---busca-paginada-de-produtos)
-  * [findAll - Busca paginada (Pageable)](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
-  * [Customizando resultados com Pageable](#customizando-resultados-com-pageable)
-    * [Resultado de página por tamanho](#resultado-de-página-por-tamanho)
-    * [Órdem alfabética](#órdem-alfabética)
-* [Create](#create---inserindo-novo-produto-com-post)
-* [PUT](#atualizando-produto-com-put)
-* [DELETE](#deletando-produto-com-delete)
+  * [findById](#findbyid)
+  * [findAll](#findall---busca-paginada-de-produtos)
+    * [findAll - Busca paginada (Pageable)](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
+    * [Customizando resultados com Pageable](#customizando-resultados-com-pageable)
+      * [Resultado de página por tamanho](#resultado-de-página-por-tamanho)
+      * [Órdem alfabética](#órdem-alfabética)
+  * [Create](#create---inserindo-novo-produto-com-post)
+  * [PUT](#atualizando-produto-com-put)
+  * [DELETE](#deletando-produto-com-delete)
 
 
 * [Customizando resposta com ResponseEntity](#customizando-resposta-com-responseentity)
