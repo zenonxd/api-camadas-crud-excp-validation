@@ -544,19 +544,150 @@ veja:
 ![img_6.png](img_6.png)
 
 
-
-
-
-
-
-
 ## Atualizando produto com PUT
+
+No postman, será um PUT. Na URI passaremos o id a ser alterado juntamente com o corpo dos itens a serem alterados, veja:
+
+A diferença para o insert é aqui precisamos instanciar o objeto como referência (getReferenceById).
+
+Service:
+```java
+@Transactional //passando um Id como parâmetro pois é o que vai ser passado no postman
+public ProductDto update(Long id, ProductDto dto) {
+
+    //instanciando um produto pela ID do banco de dados
+    //o produto só será instanciado com a referência que passamos (id)
+    Product entity = productRepository.getReferenceById(id);
+
+    //settando novos valores num produto já existente
+    copyDtoToEntity(dto, entity);
+  
+    //salvando no banco
+    entity = productRepository.save(entity);
+  
+    //reconvertendo para DTO
+    return new ProductDto(entity);
+}
+```
+
+Controller:
+```java
+@PutMapping(value = "/{id}")
+public ResponseEntity<ProductDto> update(@PathVariable Long id,
+                                         @RequestBody ProductDto dto) {
+
+    dto = productService.update(id, dto);
+
+    return ResponseEntity.status(HttpStatus.OK).body(dto);
+}
+```
 
 ## Deletando produto com DELETE
 
+Service:
+```java
+@Transactional
+public void delete(Long id) {
+    productRepository.deleteById(id);
+}
+```
+
+Controller:
+
+```java
+@DeleteMapping(value = "/{id}")
+public ResponseEntity<String> delete(@PathVariable Long id) {
+
+    productService.delete(id);
+
+    return ResponseEntity.status(HttpStatus.OK).body("Deleted sucessfully.");
+}
+```
+
 ## Criando exceções de serviço customizadas
 
+Primeira coisa é criar um subpacote exceptions na camada que vamos trabalhar. O service pode ter, controller também,
+etc.
+
+Trataremos as exceções utilizando ControllerAdvice. 
+
+Devolveremos algum código de erro na faixa do 400, veja:
+
+![img_7.png](img_7.png)
+
+Para tratar a exceção nos métodos, usaremos um try-catch. No entanto, alguns métodos (como findById), o Optional tem 
+um método que já lança uma exceção, chamado "orElseThrow()":
+
+Service:
+
+```java
+//como o service devolve um DTO para o controller,
+//a função retornará um DTO
+@Transactional(readOnly = true)
+public ProductDto findById(Long id) {
+
+    //busca no banco de dados, caso não ache, lançará uma exceção
+    Product product = productRepository.findById(id).orElseThrow(
+            () -> new ResourceNotFoundException("Recurso não encontrado."));
+
+
+    //lembrar que no DTO foi criado um construtor
+  //específico para receber um Product
+  return new ProductDto(product);
+}
+```
+
 ## Implementando outras exceções 
+
+Ok, conforme visto acima, nós implementamos uma exceção customizada. Agora, precisamos tratar esse erro, capturando essa
+exceção, devolvendo uma resposta customizada no Postman.
+
+Criaremos no pacote DTO uma classe chamada CustomError, contendo todos os atributos que é retornando em JSON no postman.
+
+![img_8.png](img_8.png)
+
+Veja a classe [CustomError]()
+
+Agora, usaremos a classe ControllerAdvice! Essa classe, podemos definir tratamentos globais para exceções específicas, 
+sem precisar ficar usando vários try-catch em diversas partes do código.
+
+Criamos um subpacote em controllers chamado handlers.
+
+Criaremos a classe [ControllerExceptionHandler]().
+
+
+Exemplo de um método de tratamento da exceção ^ da classe acima:
+
+```java
+@ExceptionHandler(ResourceNotFoundException.class)
+public ResponseEntity<CustomError> resourceNotFound(ResourceNotFoundException e, HttpServletRequest request) {
+    HttpStatus status = HttpStatus.NOT_FOUND;
+
+    //instanciando a CustomError
+    //status.value() pois estamos convertando um ENUM
+    //e.getMessage() = pegando a mensagem do parâmetro "e" ali em cima
+    //request.getRequestURI() pegando o endereço da requisição que foi feita
+    CustomError err = new CustomError(Instant.now(), status.value(), e.getMessage(), request.getRequestURI());
+
+    return ResponseEntity.status(status).body(err);
+}
+```
+
+Controller depois da alteração:
+```java
+@GetMapping(value = "/{id}")
+public ResponseEntity<ProductDto> findById(@PathVariable Long id) {
+    ProductDto dto = productService.findById(id);
+
+    return ResponseEntity.ok(dto);
+}
+```
+
+Ao rodar a aplicação no Postman:
+
+![img_9.png](img_9.png)
+
+
 
 ## Validação com Bean Validation
 

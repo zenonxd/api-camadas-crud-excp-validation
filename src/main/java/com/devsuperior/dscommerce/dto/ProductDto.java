@@ -12,8 +12,6 @@ public class ProductDto {
     private Double price;
     private String imgUrl;
 
-    public ProductDto() {}
-
     public ProductDto(Product entity) {
         id = entity.getId();
         name = entity.getName();

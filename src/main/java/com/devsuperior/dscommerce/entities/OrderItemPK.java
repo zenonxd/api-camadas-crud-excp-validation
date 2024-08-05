@@ -51,4 +51,6 @@ public class OrderItemPK {
         result = 31 * result + Objects.hashCode(getProduct());
         return result;
     }
+
+
 }

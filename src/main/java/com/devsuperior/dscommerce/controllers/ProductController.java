@@ -1,8 +1,6 @@
 package com.devsuperior.dscommerce.controllers;
 
 import com.devsuperior.dscommerce.dto.ProductDto;
-import com.devsuperior.dscommerce.entities.Product;
-import com.devsuperior.dscommerce.repositories.ProductRepository;
 import com.devsuperior.dscommerce.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,8 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/products")
@@ -27,7 +23,7 @@ public class ProductController {
     public ResponseEntity<ProductDto> findById(@PathVariable Long id) {
         ProductDto dto = productService.findById(id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(dto);
+        return ResponseEntity.ok(dto);
     }
 
 
@@ -46,6 +42,23 @@ public class ProductController {
                 .buildAndExpand(dto.getId()).toUri();
 
         return ResponseEntity.created(uri).body(dto);
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<ProductDto> update(@PathVariable Long id,
+                                             @RequestBody ProductDto dto) {
+
+        dto = productService.update(id, dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
+    }
+
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+
+        productService.delete(id);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Deleted sucessfully.");
     }
 
 }
