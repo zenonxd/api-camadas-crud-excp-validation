@@ -22,7 +22,7 @@
 * [Códigos de resposta HTTP](#códigos-de-resposta-http)
 
 
-* [Padrão camadas](#padrão-camadas)
+* [Padrão camadas (controller, service, acesso a dado)](#padrão-camadas-controller-serviço-acesso-a-dados)
 * [Responsabilidades das camadas](#responsabilidades-das-camadas)
 
 
@@ -121,8 +121,7 @@ com aquela "/"), exemplo: host, porta, rota, parâmetros, corpo(payload), de cab
 
 As funcionalidades e informações de um sistema web são organizadas na forma de **RECURSOS**.
 
-Cada recurso corresponde a alguma entidade do nosso negócio (ou conjunto de informações), veja, por exemplo, o recurso
-Product:
+Cada recurso corresponde a alguma entidade do nosso negócio (ou conjunto de informações).
 
 URL - Universal Resource Locator
 
@@ -166,7 +165,7 @@ A ação que desejamos fazer deve ser expressa pelo verbo HTTP e não por sua ro
 - Erros do cliente (400-499);
 - Erros do Servidor (500-599).
 
-## Padrão camadas
+## Padrão camadas (controller, serviço, Acesso a dados)
 
 Organizando a aplicação em camadas com responsabilidades definidas (uma forma de reestruturar o sistema), deixando o
 mesmo em um estado de fácil manutenção.
@@ -651,14 +650,14 @@ Criaremos no pacote DTO uma classe chamada CustomError, contendo todos os atribu
 
 ![img_8.png](img_8.png)
 
-Veja a classe [CustomError]()
+Veja a classe [CustomError](https://github.com/zenonxd/api-camadas-crud-excp-validation/blob/6c92b08cd4a9d86231ab6b3f0d074d1cbc8b647d/src/main/java/com/devsuperior/dscommerce/dto/CustomError.java#L5)
 
 Agora, usaremos a classe ControllerAdvice! Essa classe, podemos definir tratamentos globais para exceções específicas, 
 sem precisar ficar usando vários try-catch em diversas partes do código.
 
 Criamos um subpacote em controllers chamado handlers.
 
-Criaremos a classe [ControllerExceptionHandler]().
+Criaremos a classe [ControllerExceptionHandler](https://github.com/zenonxd/api-camadas-crud-excp-validation/blob/6c92b08cd4a9d86231ab6b3f0d074d1cbc8b647d/src/main/java/com/devsuperior/dscommerce/controllers/handlers/ControllerExceptionHandler.java#L18).
 
 
 Exemplo de um método de tratamento da exceção ^ da classe acima:
@@ -827,7 +826,6 @@ O método MethodArgumentNotValidException, possui dentro dele uma lista de erros
 Nós iremos percorrer essa lista e adicionar dentro da nossa FieldMessage, veja:
 
 
-
 ```java
 @ExceptionHandler(MethodArgumentNotValidException.class)
 public ResponseEntity<CustomError> methodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
@@ -852,3 +850,43 @@ Ao fazer a requisição no Postman:
 ![img_10.png](img_10.png)
 
 ## DESAFIO CRUD de clientes
+
+
+## Resumo
+
+Lembrar o que é API Rest e seus conceitos.
+
+Instaurar padrão de camada (controller, service, repository)
+1. [Repository](#primeiro-teste-com-repository)
+2. [Service](#criação-service)
+3. [Controller](#controller)
+
+<hr>
+
+[DTO](#criando-dto-e-estruturando-camadas)
+
+Implementar DTO para busca de dados.
+
+O Dto terá os dados que queremos utilizar, e criaremos um construtor com argumentos (com os dados inseridos).
+
+<hr>
+
+## Realizando consultas postman
+
+### [Service](https://github.com/zenonxd/api-camadas-crud-excp-validation/blob/main/src/main/java/com/devsuperior/dscommerce/services/ProductService.java)
+
+Será utilizado para gerenciar regras de negócio, como, por exemplo, encontrar um Produto por ID, inserir, atualizar,
+deletar, etc.
+
+Confira os métodos clicando acima.
+
+Se quiser fazer busca por páginas, utilizar [pageable](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
+
+## Exceptions
+
+❗Se o método for Optional, podemos tratar diretamente no [método](https://github.com/zenonxd/api-camadas-crud-excp-validation/blob/6c92b08cd4a9d86231ab6b3f0d074d1cbc8b647d/src/main/java/com/devsuperior/dscommerce/services/ProductService.java#L25).
+
+[Tratando exceção para retorno customizado no Postman](#implementando-outras-exceções-)
+
+[Validação com Bean Validaton](#validação-com-bean-validation)
+
