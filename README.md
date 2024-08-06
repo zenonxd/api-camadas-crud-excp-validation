@@ -7,7 +7,7 @@
 
 * [Objetivo](#objetivo)
 * [Requisitos projeto](#requisitos-projeto)
-* [UML](#uml)
+* [Diagrama UML](#uml)
 
 
 * [API REST - Conceitos](#api-rest---conceitos)
@@ -18,40 +18,45 @@
 
 * [Recursos, URL, parâmetros de consulta e de rota](#recursos-url-parâmetros-de-consulta-e-de-rota)
 * [Padrões de URL, verbos HTTP, códigos de resposta](#padrões-de-url-verbos-http-códigos-de-resposta)
-  * [Verbos HTTP mais utilizados](#verbos-http-mais-utilizados)
-  * [Códigos de resposta HTTP](#códigos-de-resposta-http)
+* [Verbos HTTP mais utilizados](#verbos-http-mais-utilizados)
+* [Códigos de resposta HTTP](#códigos-de-resposta-http)
 
 
 * [Padrão camadas](#padrão-camadas)
-  * [Responsabilidades das camadas](#responsabilidades-das-camadas)
+* [Responsabilidades das camadas](#responsabilidades-das-camadas)
 
 
 * [Primeiro teste da API REST](#primeiro-teste-da-api-rest)
-  * [Controller](#controller)
-  * [Repository](#primeiro-teste-com-repository)
-  * [Criando DTO e estruturando camadas](#criando-dto-e-estruturando-camadas)
-    * [Primeiro, vamos entender uma coisa, o que seria DTO?](#primeiro-vamos-entender-uma-coisa-o-que-seria-dto)
-    * [Pra quê usar DTO?](#pra-quê-usar-dto)
-  * [Criação Service](#criação-service)
-  * [Como copiar dados da entity para o DTO?](#como-copiar-dados-da-entity-para-o-dto)
+
+
+* [Controller](#controller)
+* [Repository](#primeiro-teste-com-repository)
+* [Service](#criação-service)
+
+
+* [Criando DTO e estruturando camadas](#criando-dto-e-estruturando-camadas)
+* [Primeiro, vamos entender uma coisa, o que seria DTO?](#primeiro-vamos-entender-uma-coisa-o-que-seria-dto)
+* [Pra quê usar DTO?](#pra-quê-usar-dto)
+* [Como copiar dados da entity para o DTO?](#como-copiar-dados-da-entity-para-o-dto)
 
 
 * [CRUD](#crud)
-  * [findById](#findbyid)
-  * [findAll](#findall---busca-paginada-de-produtos)
-    * [findAll - Busca paginada (Pageable)](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
-    * [Customizando resultados com Pageable](#customizando-resultados-com-pageable)
-      * [Resultado de página por tamanho](#resultado-de-página-por-tamanho)
-      * [Órdem alfabética](#órdem-alfabética)
-  * [Create](#create---inserindo-novo-produto-com-post)
-  * [PUT](#atualizando-produto-com-put)
-  * [DELETE](#deletando-produto-com-delete)
+* [findById](#findbyid)
+* [findAll](#findall---busca-paginada-de-produtos)
+  * [findAll - Busca paginada (Pageable)](#ok-e-para-realizar-a-busca-paginada-usaremos-pageable)
+  * [Customizando resultados com Pageable](#customizando-resultados-com-pageable)
+    * [Resultado de página por tamanho](#resultado-de-página-por-tamanho)
+    * [Órdem alfabética](#órdem-alfabética)
+* [Create](#create---inserindo-novo-produto-com-post)
+* [PUT](#atualizando-produto-com-put)
+* [DELETE](#deletando-produto-com-delete)
 
 
 * [Customizando resposta com ResponseEntity](#customizando-resposta-com-responseentity)
 
 * [Criando exceções de serviço customizadas](#criando-exceções-de-serviço-customizadas)
-  * [Implementando outras exceções](#implementando-outras-exceções-)
+* [Implementando outras exceções](#implementando-outras-exceções-)
+
 
 * [Validação com Bean Validation](#validação-com-bean-validation)
 
@@ -688,9 +693,162 @@ Ao rodar a aplicação no Postman:
 ![img_9.png](img_9.png)
 
 
-
 ## Validação com Bean Validation
 
+Nas variantes de inserir e atualizar dados, nós precisamos INFORMAR dados para salvar no banco.
+
+Mas essa inserção de dados, pode causar uma exceção de dados inválidos.
+
+Então temos 2 exceções: **uma de inserir e outra de atualizar.**
+
+Nós sabemos que temos 3 validações de dados:
+
+1. Nome: deve ter entre 3 e 80 caracteres;
+2. Preço: deve ser positivo;
+3. Descrição: não pode ter menos que 10 caracteres.
+
+Essa [ApiDocs](https://jakarta.ee/specifications/bean-validation/3.0/apidocs/) possui todas as anotações possiveis de
+validação para ser utilizada!
+
+Exemplos: @Email, @NotNull, @Positive, etc...
+
+### Como inserir o BeanValidation?
+
+Precisamos inserir as dependências do maven! Hibernate e Jakarta.
+
+Assim, com as anotações, **ele verificará se os dados do JSON estão corretos.**
+
+Veja como ficarão os nossos atributos da classe ProductDTO com as anotações:
+
+```java
+public class ProductDto {
+
+    private Long id;
+
+    @Size(min = 3, max = 80, message = "Nome precisa ter de 3 a 80 caracteres")
+    @NotBlank(message = "Campo requerido")
+    private String name;
+
+    @Size(min = 10, message = "No minimo 10 caracteres")
+    private String description;
+
+    @Positive(message = "O preço deve ser positivo")
+    private Double price;
+    private String imgUrl;
+}
+```
+
+Agora, para que isso seja considerado na hora de receber a requisição, no nosso controlador, mais precisamente
+no nosso Post e Update, colocaremos um @Valid no parâmetro.
+
+Isso executará uma preparação, para que sempre que o nosso Controller receber uma requisição de um Dto, ele passaa pelas 
+verificações que fizemos com as anotações acima.
+
+Com essas implementações, ao realiar uma pesquisa no Postman, teremos os retornos de código corretamente, mas sem a
+mensagem.
+
+Para que tenhamos uma mensagem customizada, veja abaixo 👇
+
 ## Customizando a resposta da validação
+
+Para que possamos customizar as mensagens, criaremos uma classe chamada FieldMassage no pacote de dto.
+
+```java
+public class FieldMessage {
+
+    //name ou price
+    private String fieldName;
+
+    private String message;
+
+    public FieldMessage(String fieldName, String message) {
+        this.fieldName = fieldName;
+        this.message = message;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+```
+
+Só que são várias mensagens para serem exibidas. Com isso, precisamos criar uma Lista de FieldMessage.
+
+Criaremos uma classe chamada ValidationError. Ela será uma sub-classe de CustomError. Ou seja, terá TUDO que o
+CustomError tem + a lista de erros, veja:
+
+```java
+public class ValidationError extends CustomError {
+    
+    //lista de fieldmessage (classe acima)
+    private List<FieldMessage> errors = new ArrayList<>();
+
+    public ValidationError(Instant timestamp, Integer status, String error, String path) {
+        super(timestamp, status, error, path);
+    }
+
+    public List<FieldMessage> getErrors() {
+        return errors;
+    }
+
+    //adicionando mensagens de erro a lista
+    public void addError(String fieldname, String message) {
+        errors.add(new FieldMessage(fieldname, message));
+    }
+}
+```
+
+O que acontece agora é o seguinte. Na nossa classe ControllerExceptionHandler, nós iremos alterar o método.
+(LEMBRE-SE, ESTE MÉTODO ALTERADO É PARA O RETORNO DO JSON)
+
+Antes, nós instanciávamos o erro em um construtor CustomError, veja:
+
+```java
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<CustomError> methodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+        
+        //instanciando o erro
+        CustomError err = new CustomError(Instant.now(), status.value(), e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+```
+
+Nós iremos retirar o CustomError e instanciar um ValidationError no seu lugar.
+
+Além disso, para que possamos adicionar os erros na lista, iremos fazer o seguinte.
+
+O método MethodArgumentNotValidException, possui dentro dele uma lista de erros.
+
+Nós iremos percorrer essa lista e adicionar dentro da nossa FieldMessage, veja:
+
+
+
+```java
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity<CustomError> methodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
+    HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+
+    //a partir da instanciação da classe ValidationError, podemos adicionar
+    //erros na lista
+    ValidationError err = new ValidationError(Instant.now(), status.value(), "Dados Inválidos", request.getRequestURI());
+
+
+    //pegamos todos os erros da lista da nossa exceção
+    //ele será chamado de "f"
+    for (FieldError f : e.getBindingResult().getFieldErrors()) {
+      err.addError(f.getField(), f.getDefaultMessage());
+    }
+    return ResponseEntity.status(status).body(err);
+}
+```
+
+Ao fazer a requisição no Postman:
+
+![img_10.png](img_10.png)
 
 ## DESAFIO CRUD de clientes
