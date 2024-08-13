@@ -1,7 +1,6 @@
 # Table of contents
 
-* [README](README.md)
-* [Objetivo](objetivo.md)
+* [Objetivo](README.md)
 * [Requisitos projeto](requisitos-projeto.md)
 * [Diagrama UML](diagrama-uml.md)
 * [API REST - Conceitos](api-rest-conceitos.md)
